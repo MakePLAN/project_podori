@@ -12,6 +12,7 @@
 #define leftBuzzerPin 7
 #define rightBuzzerPin 8
 int buzzer = 0;
+int shit;
 
 
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
@@ -155,7 +156,10 @@ void loop(void)
 void BuzzerHelper2(){
   while (Serial.available() > 0) {
     // 0-none 1-left 2-right
-    buzzer = Serial.read() - 48;
+    int shit = Serial.read() - 48;
+    if (shit == 0 || shit == 1 || shit == 2){
+      buzzer = shit;
+    }
   }
   if (buzzer == 0) {
     digitalWrite(leftBuzzerPin, LOW);

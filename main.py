@@ -1,5 +1,7 @@
 import pygame
-import time
+import serial
+from pedal_thread import *
+from handle_thread import *
 
 pygame.init()
 
@@ -24,7 +26,8 @@ car_height = 160
 car_start_x = 710
 car_start_y = 400
 
-
+first = -1
+second = -1
 
 sign_y = [100, 327, 554, 100, 327, 554]
 
@@ -44,15 +47,24 @@ blueImg = pygame.image.load('images/blue_car.png')
 #mario kart
 marioImg = pygame.image.load('images/mario_kart.png')
 
+#bus
+busImg = pygame.image.load('images/bus.png')
+
+#car anim
+mcImg = pygame.image.load('images/mcqueen_car.png')
 
 
 gameDisplay = pygame.display.set_mode((display_width, display_height))
-pygame.display.set_caption( 'A bit Racey')
+pygame.display.set_caption( 'Project Podori')
 clock = pygame.time.Clock() #measure frame per second
 
 #sound
 pygame.mixer.music.load("driving.mp3")
 braking_sound = pygame.mixer.Sound("braking.wav")
+braking_sound.set_volume(0.3)
+
+crash_sound = pygame.mixer.Sound("crash.wav")
+crash_sound.set_volume(0.5)
 
 cur_time = 0
 pause = False
@@ -61,11 +73,21 @@ location_map = {}
 lane_map = ["","","","","",""]
 lane_y = [0,0,0,0,0,0]
 lane_bool = [True, True, True, True, True, True]
+spawn_bool = [False, False, False, True, False, False]
+level = ["forward", "brake", "lane", "turn"]
 
-car_list = ["battle_cruiser", "blue_car", "bus", "delivery_car", "mario_kart", "mcqueen_car", "truck", "police_car"]
+car_list = ["battle_cruiser", "blue_car", "bus", "delivery_car", "mario_kart", "mcqueen", "truck", "police_car"]
+
+thread1 = Pedal_Thread(1)
+thread2 = Handle_Thread(1)
+
+thread1.start()
+thread2.start()
+
+turning = False
 
 def setup():
-    global carImg,battleImg, blueImg, busImg
+    global carImg,battleImg, blueImg, busImg, marioImg, mcImg
 
     #police car
     location_map["police_car"] = (80, 160, [0,0,0,0,710,0])
@@ -80,18 +102,30 @@ def setup():
     blueImg = pygame.transform.smoothscale(blueImg, (120, 250))
 
     #bus
-    location_map["bus"] = (100, 200, [0,0, 0, 0,0,0])
+    location_map["bus"] = (100, 170, [ 50 , 0, 0, 0,0,0])
+    busImg = pygame.transform.smoothscale(busImg, (100, 170))
 
+    #mario kart
+    location_map["mario_kart"] = (344, 433 , [0, 180, 0, 0, 0, 0])
+    marioImg = pygame.transform.smoothscale(marioImg, (int(344*0.30), int(433 * 0.30 )))
+    #344 × 433
+
+    #mc_queen
+    location_map["mcqueen"] = (144, 278, [0, 0, 330, 0, 0, 0])
+    mcImg = pygame.transform.smoothscale(mcImg, (int(144 * 0.75), int(278 * 0.75)))
+    #144 × 278
 
     #testing
+    lane_map[0] = "bus"
+    lane_map[1] = "mario_kart"
+    lane_map[2] = "mcqueen"
     lane_map[3] = "battle_cruiser"
     lane_map[4] = "police_car"
     lane_map[5] = "blue_car"
 
-
-
     lane_y[4] = 400
     lane_bool[4] = False
+
 
 
 
@@ -101,9 +135,9 @@ def spawn_car( car_name, lane, loc_y=None, loc_x=None, angle=None): # function t
 
     if loc_y == None:
         y = display_height + location_map[car_name][1]
-        lane_y[lane] = y
     else:
         y = loc_y
+    lane_y[lane] = y
 
     img = None
     if car_name == "police_car":
@@ -116,7 +150,12 @@ def spawn_car( car_name, lane, loc_y=None, loc_x=None, angle=None): # function t
         img = battleImg
     elif car_name == "blue_car":
         img = blueImg
-
+    elif car_name == "bus":
+        img = busImg
+    elif car_name == "mario_kart":
+        img = marioImg
+    elif car_name == "mcqueen":
+        img = mcImg
 
     #print(car_name, ": ", y)
     gameDisplay.blit( img, (x, y))  # blit - spawn the car
@@ -256,7 +295,7 @@ def game_intro():
         clock.tick(15)
 
 def game_loop():
-    global stime, pause
+    global stime, pause, first, second
 
     pygame.mixer.music.play(-1)
     pygame.mixer.music.pause()
@@ -293,15 +332,17 @@ def game_loop():
 
         for event in pygame.event.get(): #event handling loop
             if event.type == pygame.QUIT:
+                thread1.stop = True
+                thread2.stop = True
                 pygame.quit()
                 quit()
 
 
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_LEFT:
-                    angle += 5
+                    angle += 90
                 if event.key == pygame.K_RIGHT:
-                    angle -= 5
+                    angle -= 90
                 if event.key == pygame.K_UP:
                     key_state = 1
                 if event.key == pygame.K_DOWN:
@@ -322,14 +363,47 @@ def game_loop():
                     key_state = 2
             #print(event)
 
+
+        if thread1.last_digit == 1:
+            key_state = 1
+        elif thread1.last_digit == 2:
+            key_state = 3
+        elif thread1.last_digit == 0:
+            key_state = 2
+
+        if thread2.first == 1 and first != thread2.first:
+            angle -= 90
+            turning = True
+        elif thread2.first == 2 and first != thread2.first:
+            x_change += 140
+        elif thread2.first == 3 and first != thread2.first:
+            angle += 90
+        elif thread2.first == 4 and first != thread2.first:
+            x_change -= 140
+
+        if first != thread2.first:
+            first = thread2.first
+
+        if thread2.second == 5 and second != thread2.second:
+            print("left signal")
+        elif thread2.second == 7 and second != thread2.second:
+            print("no signal")
+        elif thread2.second == 6 and second != thread2.second:
+            print("right signal")
+
+        if second != thread2.second:
+            second = thread2.second
+
+
         if angle < 0:
-            angle = 355
+            angle = 360 + angle
         elif angle > 360:
-            angle = 5
+            angle = angle - 360
 
         #print("angle: ", angle)
 
         x += x_change
+        x_change = 0
 
         gameDisplay.fill(white)
 
@@ -339,7 +413,7 @@ def game_loop():
         # checking wall collision
         if (x > (display_width - wall_width - car_width) or x < wall_width) or (
                 (display_width / 2) - wall_width <= x <= (
-                display_width / 2) - wall_width + midwall_width) and not crashed:
+                display_width / 2) - wall_width + midwall_width) and not crashed and not turning:
             stime = int(time.localtime(time.time())[5])
             crashed = True
 
@@ -377,7 +451,7 @@ def game_loop():
                 pygame.mixer.music.play(-1)
                 sound_state = 0
 
-        display_speed(int(sign_speed))
+
         gap = 100
         #sign1_y = i * gap + ((display_height - 200) / 4) * i
         #sign2_y = i * gap + ((display_height - 200) / 4) * i
@@ -402,29 +476,67 @@ def game_loop():
         spawn_car("police_car", 4, lane_y[4], x, angle ) #spawn the car
 
 
+        if spawn_bool[3]:
+            #spawn left car
+            if lane_bool[3]:
+                spawn_car("battle_cruiser", 3)
+                lane_bool[3] = False
+                thread2.data = str.encode('1')
+                thread2.send = True
+            else:
+                spawn_car("battle_cruiser", 3, lane_y[3])
+                lane_y[3] -= 10
+                if (lane_y[3] + location_map["battle_cruiser"][1]) < 0:
+                    lane_bool[3] = True
+                    thread2.data = str.encode('0')
+                    thread2.send = True
+                    spawn_bool[3] = False
 
-        #spawn left car
-        if lane_bool[3]:
-            spawn_car("battle_cruiser", 3)
-            lane_bool[3] = False
-        else:
-            spawn_car("battle_cruiser", 3, lane_y[3])
-            lane_y[3] -= 10
-            if (lane_y[3] + location_map["battle_cruiser"][1]) < 0:
-                lane_bool[3] = True
+        if spawn_bool[5]:
+            #spawn right car
+            if lane_bool[5]:
+                spawn_car("blue_car", 5)
+                lane_bool[5] = False
+            else:
+                spawn_car("blue_car", 5, lane_y[5])
+                lane_y[5] -= 10
+                if ( lane_y[5] + location_map["blue_car"][1]) < 0:
+                    lane_bool[5] = True
 
+        if spawn_bool[0]:
+            #spawn first lane car
+            if lane_bool[0]:
+                spawn_car("bus", 0, 0 - location_map["bus"][1])
+                lane_bool[0] = False
+            else:
+                spawn_car("bus", 0, lane_y[0])
+                lane_y[0] += 6
+                if lane_y[0] > display_height + location_map["bus"][1]:
+                    lane_bool[0] = True
 
-        #spawn right car
-        if lane_bool[5]:
-            spawn_car("blue_car", 5)
-            lane_bool[5] = False
-        else:
-            spawn_car("blue_car", 5, lane_y[5])
-            lane_y[5] -= 10
-            if ( lane_y[5] + location_map["blue_car"][1]) < 0:
-                lane_bool[5] = True
+        if spawn_bool[1]:
+            #spawn second lane car
+            if lane_bool[1]:
+                spawn_car("mario_kart", 1, 0 - location_map["mario_kart"][1])
+                lane_bool[1] = False
+            else:
+                spawn_car("mario_kart", 1, lane_y[1])
+                lane_y[1] += 15
+                if lane_y[1] > display_height + location_map["mario_kart"][1]:
+                    lane_bool[1] = True
 
+        if spawn_bool[2]:
+            #spawn third lane car
+            if lane_bool[2]:
+                spawn_car("mcqueen", 2, 0 - location_map["mcqueen"][1])
+                lane_bool[2] = False
+            else:
+                spawn_car("mcqueen", 2, lane_y[2])
+                lane_y[2] += 12
+                if lane_y[2] > display_height + location_map["mcqueen"][1]:
+                    lane_bool[2] = True
 
+        '''
         things(thing_startx, thing_starty, thing_width, thing_height, black)
         thing_starty += thing_speed
 
@@ -434,12 +546,16 @@ def game_loop():
         if y < thing_starty + thing_height:
             if x > thing_startx and x < thing_startx + thing_width or x + car_width > thing_startx and x + car_width < thing_startx+thing_width:
                 crashed = True
-
+        '''
+        display_speed(int(sign_speed))
 
         if crashed:
             x_change = 0
+            pygame.mixer.Sound.play(crash_sound)
             game_over()
             #display_text("You Crahsed", stime, 2)
+        # thread1.data = str.encode('1')
+        # thread1.send = True
 
         pygame.display.update()
         #update = update that one part or the entire surface
