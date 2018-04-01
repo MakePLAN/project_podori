@@ -54,5 +54,11 @@ import os
 # tts = gTTS(text='Pull up the right bar to signal lane changing to the right. Watch out for the car coming from right side.', lang='en')
 # tts.save("signal_right.mp3")
 
-tts = gTTS(text='Turn the wheel 45 degree to right to switch to the right lane', lang='en')
-tts.save("turn_right.mp3")
+# tts = gTTS(text='Turn the wheel 45 degree to right to switch to the right lane', lang='en')
+# tts.save("turn_right.mp3")
+
+tts = gTTS(text='Turn the wheel 90 degree to right to turn right.', lang='en')
+tts.save("turn_right_90.mp3")
+
+tts = gTTS(text='Turn the wheel 90 degree to left to turn left.', lang='en')
+tts.save("turn_left_90.mp3")
