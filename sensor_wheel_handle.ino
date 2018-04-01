@@ -46,16 +46,16 @@ void displaySensorDetails(void)
 {
   sensor_t sensor;
   bno.getSensor(&sensor);
-  Serial.println("------------------------------------");
-  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
-  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
-  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
-  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" xxx");
-  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" xxx");
-  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" xxx");
-  Serial.println("------------------------------------");
-  Serial.println("");
-  delay(500);
+//  Serial.println("------------------------------------");
+//  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
+//  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
+//  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
+//  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" xxx");
+//  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" xxx");
+//  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" xxx");
+//  Serial.println("------------------------------------");
+//  Serial.println("");
+//  delay(500);
 }
 
 /**************************************************************************/
@@ -71,15 +71,15 @@ void displaySensorStatus(void)
   bno.getSystemStatus(&system_status, &self_test_results, &system_error);
 
   /* Display the results in the Serial Monitor */
-  Serial.println("");
-  Serial.print("System Status: 0x");
-  Serial.println(system_status, HEX);
-  Serial.print("Self Test:     0x");
-  Serial.println(self_test_results, HEX);
-  Serial.print("System Error:  0x");
-  Serial.println(system_error, HEX);
-  Serial.println("");
-  delay(500);
+//  Serial.println("");
+//  Serial.print("System Status: 0x");
+//  Serial.println(system_status, HEX);
+//  Serial.print("Self Test:     0x");
+//  Serial.println(self_test_results, HEX);
+//  Serial.print("System Error:  0x");
+//  Serial.println(system_error, HEX);
+//  Serial.println("");
+//  delay(500);
 }
 
 /**************************************************************************/
@@ -97,21 +97,21 @@ void displayCalStatus(void)
   bno.getCalibration(&system, &gyro, &accel, &mag);
 
   /* The data should be ignored until the system calibration is > 0 */
-  Serial.print("\t");
-  if (!system)
-  {
-    Serial.print("! ");
-  }
-
-  /* Display the individual values */
-  Serial.print("Sys:");
-  Serial.print(system, DEC);
-  Serial.print(" G:");
-  Serial.print(gyro, DEC);
-  Serial.print(" A:");
-  Serial.print(accel, DEC);
-  Serial.print(" M:");
-  Serial.print(mag, DEC);
+//  Serial.print("\t");
+//  if (!system)
+//  {
+//    Serial.print("! ");
+//  }
+//
+//  /* Display the individual values */
+//  Serial.print("Sys:");
+//  Serial.print(system, DEC);
+//  Serial.print(" G:");
+//  Serial.print(gyro, DEC);
+//  Serial.print(" A:");
+//  Serial.print(accel, DEC);
+//  Serial.print(" M:");
+//  Serial.print(mag, DEC);
 }
 
 /**************************************************************************/
@@ -122,13 +122,13 @@ void displayCalStatus(void)
 void setup(void)
 {
   Serial.begin(9600);
-  Serial.println("Orientation Sensor Test"); Serial.println("");
+//  Serial.println("Orientation Sensor Test"); Serial.println("");
 
   /* Initialise the sensor */
   if(!bno.begin())
   {
     /* There was a problem detecting the BNO055 ... check your connections */
-    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
+//    Serial.print("Ooops, no BNO055 detected ... Check your wiring or I2C ADDR!");
     while(1);
   }
 
@@ -143,33 +143,38 @@ void setup(void)
   bno.setExtCrystalUse(true);
 }
 
-void displayTurn(float x){
-  Serial.println("");
+int displayTurn(float x){
+//  Serial.println("");
   int state = 0;
   if(x < 330 && x > 300){
 //    Serial.println("Turning Right 45 deg");
     state = 1;
-    Serial.println("2");
+//    Serial.println("2");
+    return 2;
   }
   else if(x < 300 && x > 270){
 //    Serial.println("Turning Right 90 deg");
     state = 2;
-    Serial.println("1");
+//    Serial.println("1");
+    return 1;
   }
   else if(x > 20  && x < 65){
 //    Serial.println("Turning Left 45 deg");
     state = -1;
-    Serial.println("4");
+//    Serial.println("4");
+    return 4;
   }
   else if(x > 65 && x < 100){
 //    Serial.println("Turning Left 90 deg");
     state = -2;
-    Serial.println("3");
+//    Serial.println("3");
+    return 3;
   }
   else{
 //    Serial.println("Not turning");
     state = 0;
-    Serial.println("0");
+//    Serial.println("0");
+    return 0;
   }
    
 }
@@ -185,6 +190,7 @@ void loop(void)
   /* Get a new sensor event */
   sensors_event_t event;
   bno.getEvent(&event);
+  String state = "";
 
   /* Display the floating point data */
 //  Serial.print("X: ");
@@ -193,36 +199,38 @@ void loop(void)
 //  Serial.print(event.orientation.y, 4);
 //  Serial.print("\tZ: ");
 //  Serial.print(event.orientation.z, 4);
-  displayTurn(event.orientation.x);
+
+  state += displayTurn(event.orientation.x);
 
     float distance = distanceSensor.measureDistanceCm();
-    int state = 0;
-    Serial.println(distance);
+//    Serial.println(distance);
     if(distance > 7.5 || distance == -1){
        //Serial.println("Up");
-       state = 1;
-       Serial.println('5');
+       state += 5;
+//       Serial.println('5');
     }
-    else if(distance < 5 && distance > 0){
+    else if(distance < 4.3 && distance > 0){
 //      Serial.println("Down");
-      state = -1;
-      Serial.println('6');
+      state += 6;
+//      Serial.println('6');
     }
     else{
 //      Serial.println("Center");
-      state = 0;
-      Serial.println('7');
+      state += 7;
+//      Serial.println('7');
     }
+
+    Serial.println(state);
     delay(1000);
   
   /* Optional: Display calibration status */
-//  displayCalStatus();
+  displayCalStatus();
 
   /* Optional: Display sensor status (debug only) */
-  //displaySensorStatus();
+  displaySensorStatus();
 
   /* New line for the next sample */
-  Serial.println("");
+//  Serial.println("");
 
   /* Wait the specified delay before requesting nex data */
   delay(BNO055_SAMPLERATE_DELAY_MS);
