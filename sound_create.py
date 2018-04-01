@@ -13,9 +13,9 @@ import os
 # tts.save("approach_limit.mp3")
 # os.system("mpg321 approach_limit.mp3")
 
-tts = gTTS(text='Alert: you\'re over the speed limit', lang='en')
-tts.save("over_limit.mp3")
-os.system("mpg321 over_limit.mp3")
+# tts = gTTS(text='Alert: you\'re over the speed limit', lang='en')
+# tts.save("over_limit.mp3")
+# os.system("mpg321 over_limit.mp3")
 
 # tts = gTTS(text='Good job! You\'re doing great', lang='en')
 # tts.save("good_job.mp3")
@@ -40,3 +40,7 @@ os.system("mpg321 over_limit.mp3")
 # tts = gTTS(text='Turn right at by turning the steering at around 45 degrees to switch lanes', lang='en')
 # tts.save("turn_right.mp3")
 # os.system("mpg321 turn_right.mp3")
+
+tts = gTTS(text='Try to stop the car completely by  pressing the left pedal', lang='en')
+tts.save("over_limit.mp3")
+# os.system("mpg321 over_limit.mp3")
