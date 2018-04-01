@@ -1,6 +1,7 @@
 from gtts import gTTS
 import os
 
+<<<<<<< HEAD
 # tts = gTTS(text='Good morning', lang='en')
 # tts.save("good.mp3")
 # os.system("mpg321 good.mp3")
@@ -65,3 +66,8 @@ import os
 
 tts = gTTS(text='You have successfully switched to the right lane.', lang='en')
 tts.save("switch_lane_successful.mp3")
+
+tts = gTTS(text='Car behind you is approaching', lang='en')
+tts.save("test.mp3")
+os.system("mpg321 good.mp3")
+
