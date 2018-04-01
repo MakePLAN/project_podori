@@ -45,5 +45,11 @@ import os
 # tts.save("brake_inst.mp3")
 # os.system("mpg321 over_limit.mp3")
 
-tts = gTTS(text='You\'re over the speed limit. You should brake by stepping on the left pedal!', lang='en')
-tts.save("brake_warning.mp3")
+# tts = gTTS(text='You\'re over the speed limit. You should brake by stepping on the left pedal!', lang='en')
+# tts.save("brake_warning.mp3")
+
+tts = gTTS(text='Pull up the left bar to signal lane changing to the left. Watch out for the car coming from left side.', lang='en')
+tts.save("signal_left.mp3")
+
+tts = gTTS(text='Pull up the right bar to signal lane changing to the right. Watch out for the car coming from right side.', lang='en')
+tts.save("signal_right.mp3")
