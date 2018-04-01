@@ -41,6 +41,9 @@ import os
 # tts.save("turn_right.mp3")
 # os.system("mpg321 turn_right.mp3")
 
-tts = gTTS(text='Try to stop the car completely by  pressing the left pedal', lang='en')
-tts.save("over_limit.mp3")
+# tts = gTTS(text='Try to stop the car completely by  pressing the left pedal', lang='en')
+# tts.save("brake_inst.mp3")
 # os.system("mpg321 over_limit.mp3")
+
+tts = gTTS(text='You\'re over the speed limit. You should brake!', lang='en')
+tts.save("brake_warning.mp3")
